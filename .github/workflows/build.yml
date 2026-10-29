@@ -1,0 +1,40 @@
+name: Auto Generate Report with Gemini
+
+on:
+  push:
+    paths:
+      - 'dan_y.md'
+
+jobs:
+  run-gemini:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run generation script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate.py
+
+      - name: Install Pandoc
+        run: sudo apt-get install -y pandoc
+
+      - name: Convert Markdown to Word DOCX
+        run: pandoc hoan_thien.md -o Bao_cao_hoan_chinh.docx
+
+      - name: Commit result back to repo
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add hoan_thien.md Bao_cao_hoan_chinh.docx
+          git commit -m "Auto-generate content using Gemini" || echo "No changes"
+          git push
